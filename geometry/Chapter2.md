@@ -333,4 +333,3 @@
 ![Thm 2.42](https://cdn.discordapp.com/attachments/1019351346362712084/1032091888766947378/unknown.png)
 
 ![Defn 2.35](https://cdn.discordapp.com/attachments/1019351346362712084/1032091989191176222/unknown.png)
-
