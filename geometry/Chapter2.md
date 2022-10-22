@@ -224,7 +224,7 @@
 
 ![Thm 2.23](https://cdn.discordapp.com/attachments/1019351346362712084/1032070171193511946/unknown.png)
 
-![Thm 2.23 diagram](https://cdn.discordapp.com/attachments/1019351346362712084/1032070171193511946/unknown.png)
+![Thm 2.23 diagram](https://cdn.discordapp.com/attachments/1019351346362712084/1032070296020209746/unknown.png)
 
 ### Theorem 2.24
 
