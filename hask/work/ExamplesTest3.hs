@@ -98,6 +98,31 @@ c) Use the type Env below of lookup table for values for variables to implement 
 
 type Env = [(String,Int)] 
 
+data Expr
+   = Lit Int
+   | Var String
+   | Add Expr Expr
+   | Mult Expr Expr
+
+example1 = Mult (Add (Lit 1) (Var "x")) (Lit 2)
+example2 = Add (Add (Lit 1) (Var "x")) (Lit 2)
+example3 = Add (Mult (Lit 1) (Var "x")) (Lit 2)
+example4 = Mult (Mult (Lit 1) (Var "x")) (Lit 2)
+example5 = Add (Mult (Lit 1) (Add (Var "x") (Var "x"))) (Lit 2)
+
+instance Show Expr where
+   showsPrec _ (Lit n) = shows n
+   showsPrec _ (Var n) = showString n
+   showsPrec n (Add x y) = (if n > 0 then showChar '(' else id) . showsPrec 0 x . showString " + " . showsPrec 0 y . (if n > 0 then showChar ')' else id)
+   showsPrec n (Mult x y) = (if n > 1 then showChar '(' else id) . showsPrec 1 x . showString " * " . showsPrec 1 y . (if n > 1 then showChar ')' else id) -- Forward Compatibility?
+
+eval :: Env -> Expr -> Int
+eval e (Lit n) = n
+eval e (Var s) = maybe (error ("No Value " ++ s ++ " in Store")) id (lookup s e)
+eval e (Add x y) = eval e x + eval e y
+eval e (Mult x y) = eval e x * eval e y
+
+
 {- 
 Question 3:
 Below you find the data type Tree a of binary trees with empty leaves storing elements of type a at
@@ -163,8 +188,58 @@ height :: Tree a -> Int
 height Leaf = 0
 height (Node _ t1 t2) = 1+max (height t1) (height t2)
 
+insert :: Ord a => a -> Tree a -> Tree a
+insert x Leaf = Node x Leaf Leaf
+insert x (Node y l1 l2) | x <= y = Node y (insert x l1) l2
+                        | otherwise = Node x Leaf (insert x l2)
 
-{-main :: IO ()
+removeLeftMost :: Tree a -> Maybe (a,Tree a)
+removeLeftMost Leaf = Nothing
+removeLeftMost (Node n Leaf r) = Just (n, r)
+removeLeftMost (Node n l r) = Just (r', Node n t' r)
+   where Just (r', t') = removeLeftMost l
+
+delete :: Ord a => a -> Tree a -> Tree a
+delete a Leaf           = Leaf
+delete a (Node b t1 t2) | a == b    = maybe t1 (\(r,t') -> Node r t1 t') (removeLeftMost t2)
+                        | a <= b    = Node b (delete a t1) t2
+                        | otherwise = Node b t1 (delete a t2)
+                        
+balanceFactor :: Tree a -> Int
+balanceFactor Leaf           = 0
+balanceFactor (Node _ t1 t2) = height t2 - height t1
+
+isBalanced :: Tree a -> Bool
+isBalanced Leaf             = True
+isBalanced t@(Node _ t1 t2) = isBalanced t1 && isBalanced t2 && abs (balanceFactor t) <= 1
+
+rotate_left :: Tree a -> Tree a
+rotate_left (Node a t1 (Node b t2 t3)) = Node b (Node a t1 t2) t3
+
+rotate_right :: Tree a -> Tree a
+rotate_right (Node a (Node b t1 t2) t3) = Node b t1 (Node a t2 t3)
+
+rotate_right_left :: Tree a -> Tree a
+rotate_right_left (Node a t1 t2) = rotate_left (Node a t1 (rotate_right t2))
+
+rotate_left_right :: Tree a -> Tree a
+rotate_left_right (Node a t1 t2) = rotate_right (Node a (rotate_left t1) t2)
+
+balanceRoot :: Tree a -> Tree a
+balanceRoot t@(Node a t1 t2) | bt ==  2 && bt2 == -1 = rotate_right_left t
+                             | bt ==  2 && otherwise = rotate_left t
+                             | bt == -2 && bt1 ==  1 = rotate_left_right t
+                             | bt == -2 && otherwise = rotate_right t
+                             | otherwise             = t
+    where bt  = balanceFactor t
+          bt1 = balanceFactor t1
+          bt2 = balanceFactor t2
+          
+balance :: Tree a -> Tree a
+balance Leaf           = Leaf
+balance (Node a t1 t2) = balanceRoot (Node a (balance t1) (balance t2)) 
+
+main :: IO ()
 main = runExample ['m','n','o','l','k','q','p','h','i','a'] Leaf
     where runExample :: (Ord a, Show a) => [a] -> Tree a -> IO ()
           runExample [] t      = print t
@@ -172,8 +247,4 @@ main = runExample ['m','n','o','l','k','q','p','h','i','a'] Leaf
                                   print t
                                   putStrLn "Hit any key."
                                   getChar
-                                  runExample as (insert a t)-}
-              
-
-
-
+                                  runExample as (insert a t)
